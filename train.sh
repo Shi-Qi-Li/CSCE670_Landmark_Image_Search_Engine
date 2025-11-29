@@ -6,4 +6,4 @@ python train.py \
     --layers_num 4 \
     --lr 1e-4 \
     --batch_size 2048 \
-    --num_epochs 20
+    --num_epochs 180
