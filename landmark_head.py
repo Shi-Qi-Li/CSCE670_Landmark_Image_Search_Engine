@@ -7,12 +7,15 @@ class LandmarkHead(torch.nn.Module):
         self.multihead_num = multihead_num
         self.transformer_layers_num = layers_num
         self.Q_projection = torch.nn.Linear(input_dim, hidden_dim).to(device)
-        self.K_projection = torch.nn.Linear(input_dim, hidden_dim).to(device)
-        self.V_projection = torch.nn.Linear(input_dim, hidden_dim).to(device)
+        # self.K_projection = torch.nn.Linear(input_dim, hidden_dim).to(device)
+        # self.V_projection = torch.nn.Linear(input_dim, hidden_dim).to(device)
+        self.condition_projection = torch.nn.Linear(input_dim, hidden_dim).to(device)
+        self.K_projection_cross_attn = torch.nn.Linear(hidden_dim, hidden_dim).to(device)
+        self.V_projection_cross_attn = torch.nn.Linear(hidden_dim, hidden_dim).to(device)
         
         self.cross_attention = torch.nn.MultiheadAttention(
             embed_dim=hidden_dim,
-            num_heads=4,
+            num_heads=multihead_num,
             batch_first=True
         ).to(device)
         
@@ -22,29 +25,29 @@ class LandmarkHead(torch.nn.Module):
             batch_first=True
         ).to(device)
         norm_layer = torch.nn.LayerNorm(hidden_dim).to(device)
-        # self.transformer_encoder = torch.nn.TransformerEncoder(encoder_layer, num_layers=transformer_layers_num, norm=norm_layer).to(device)
-        mlp_layers = []
-        for i in range(layers_num):
-            mlp_layers.append(torch.nn.Linear(hidden_dim, hidden_dim).to(device))
-            mlp_layers.append(torch.nn.ReLU().to(device))
-        self.mlp = torch.nn.Sequential(*mlp_layers).to(device)
+        self.transformer_encoder = torch.nn.TransformerEncoder(encoder_layer, num_layers=layers_num, norm=norm_layer).to(device)
+        # mlp_layers = []
+        # for i in range(layers_num):
+        #     mlp_layers.append(torch.nn.Linear(hidden_dim, hidden_dim).to(device))
+        #     mlp_layers.append(torch.nn.ReLU().to(device))
+        # self.mlp = torch.nn.Sequential(*mlp_layers).to(device)
         
     def forward(self, cls_tokens, patch_features):
-        Q = self.Q_projection(cls_tokens).unsqueeze(1)  # [batch, 1, hidden_dim]
-        K = self.K_projection(patch_features)  # [batch, num_patches, hidden_dim]
-        V = self.V_projection(patch_features)  # [batch, num_patches, hidden_dim]
+        condition_embed = self.condition_projection(cls_tokens).unsqueeze(1)  # [batch, 1, hidden_dim]
+        Q = self.Q_projection(patch_features)  # [batch, num_patches, hidden_dim]
         
-        print(Q.shape, K.shape, V.shape)
+        transformer_output = self.transformer_encoder(Q, src_key_padding_mask=None)
         
+        K_cross = self.K_projection_cross_attn(transformer_output)
+        V_cross = self.V_projection_cross_attn(transformer_output)
         cross_attn_output, _ = self.cross_attention(
-            query=Q,
-            key=K,
-            value=V
+            query=condition_embed,
+            key=K_cross,
+            value=V_cross
         )
-        print(cross_attn_output.shape)
         
         # transformer_output = self.transformer_encoder(cross_attn_output)
         # print(transformer_output.shape)
-        output = self.mlp(cross_attn_output).squeeze(1)
+        # output = self.mlp(cross_attn_output).squeeze(1)
         
-        return output
+        return cross_attn_output.squeeze(1)  # [batch, hidden_dim]

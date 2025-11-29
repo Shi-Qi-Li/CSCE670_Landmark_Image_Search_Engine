@@ -1,0 +1,4 @@
+checkpoint_epoch_1.pth
+*.pth
+*.pyc
+__pycache__/

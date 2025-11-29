@@ -4,9 +4,9 @@ from transformers.image_utils import load_image
 from torchvision.models.vision_transformer import Encoder
 
 class ImageEncoder:
-    def __init__(self, device='cpu'):
-        self.processor = AutoImageProcessor.from_pretrained("facebook/dinov3-vit7b16-pretrain-lvd1689m")
-        self.model = AutoModel.from_pretrained("facebook/dinov3-vit7b16-pretrain-lvd1689m").to(device)
+    def __init__(self, lib='facebook/dinov3-vit7b16-pretrain-lvd1689m', device='cpu'):
+        self.processor = AutoImageProcessor.from_pretrained(lib)
+        self.model = AutoModel.from_pretrained(lib).to(device)
         self.device = device
     
     def encode(self, images):
