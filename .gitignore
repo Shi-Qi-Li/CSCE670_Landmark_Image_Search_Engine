@@ -1,4 +1,5 @@
 checkpoint_epoch_1.pth
+gradio_tmp
 *.pth
 *.pyc
 __pycache__/

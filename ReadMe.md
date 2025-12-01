@@ -60,3 +60,14 @@ vector = landmark_head(cls_tokens, patch_features) # dim = 512
 ### Dataset
 
 The dataset is located in /data/hkzhang/GLDv2. I have authorize the access permission. It includes 90k images. The image is stored in /data/hkzhang/GLDv2/0, metadata is stored in /data/hkzhang/GLDv2/train.csv.
+
+## Gradio Demo
+
+Use DINOv3 cls_token for coarse retrieval.
+```
+python app.py --dataset_dir your_dataset_path --mode cls
+```
+Use landmark head feature for coarse retrieval.
+```
+python app.py --dataset_dir your_dataset_path --ckpt your_ckpt_path
+```
